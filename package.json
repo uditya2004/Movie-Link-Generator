@@ -1,0 +1,25 @@
+{
+  "name": "new-folder",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^2.0.44",
+    "@openai/agents": "^0.3.3",
+    "@openai/agents-extensions": "^0.3.3",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "openai": "^6.10.0",
+    "zod": "^3.25.76"
+  }
+}
