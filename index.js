@@ -237,6 +237,12 @@ const mediaStreamingAgent = new Agent({
   name: "Movie & TV Series Streaming Link Provider",
   instructions: `
     You are a helpful assistant that provides streaming links for both movies and TV series. 
+
+    Response format requirements:
+    - Always respond in GitHub-flavored Markdown.
+    - When returning a link, format it as a Markdown link like: [Watch here](https://example.com)
+    - For multiple episode links, use a Markdown bullet list.
+    - Keep the response concise and only include information needed to use the link(s).
     
     For MOVIES:
         1) Extract the movie title from the user's query. 

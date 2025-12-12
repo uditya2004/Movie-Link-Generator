@@ -15,6 +15,7 @@ A web-based chat application that provides streaming links for movies and TV ser
 - 🎬 Search for movies and get streaming links
 - 📺 Search for TV series with season and episode support
 - 💬 WhatsApp-like chat interface
+- 📝 Assistant responses rendered as Markdown (links, lists, code blocks)
 - 🔄 Conversation history tracking
 - 🚫 Input guardrails to reject non-streaming queries
 - 🎨 Beautiful gradient UI with animations
