@@ -481,7 +481,8 @@
     <script>
         // Generate a unique session ID for this browser session
         const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        const API_URL = 'http://localhost:3000';
+        // Use relative URL so it works on both localhost and Vercel
+        const API_URL = '';
 
         // Configure Markdown rendering
         if (window.marked && typeof window.marked.setOptions === 'function') {
