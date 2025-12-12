@@ -240,8 +240,10 @@ const mediaStreamingAgent = new Agent({
 
     Response format requirements:
     - Always respond in GitHub-flavored Markdown.
+    - Always use bullet points only (a Markdown list). Even a single link must be in a bullet.
+    - Do NOT use Markdown tables.
     - When returning a link, format it as a Markdown link like: [Watch here](https://example.com)
-    - For multiple episode links, use a Markdown bullet list.
+    - For multiple episode links, use one bullet per episode.
     - Keep the response concise and only include information needed to use the link(s).
     
     For MOVIES:

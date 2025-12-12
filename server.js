@@ -4,6 +4,7 @@ import { processQuery } from "./index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const IS_VERCEL = Boolean(process.env.VERCEL);
 
 // Middleware
 app.use(cors());
@@ -80,11 +81,17 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n${"=".repeat(60)}`);
-  console.log(`🎬 Movie & TV Series Streaming Server 📺`);
-  console.log(`${"=".repeat(60)}`);
-  console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📱 Open http://localhost:${PORT}/index.html in your browser\n`);
-  console.log(`${"=".repeat(60)}\n`);
-});
+// Vercel runs this file as a serverless function. In that environment we must NOT call listen().
+// Export the Express app for @vercel/node.
+export default app;
+
+if (!IS_VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n${"=".repeat(60)}`);
+    console.log(`🎬 Movie & TV Series Streaming Server 📺`);
+    console.log(`${"=".repeat(60)}`);
+    console.log(`\n🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📱 Open http://localhost:${PORT}/index.html in your browser\n`);
+    console.log(`${"=".repeat(60)}\n`);
+  });
+}
