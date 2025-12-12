@@ -26,19 +26,24 @@ const mediaInputAgent = new Agent({
   name: "Media query checker",
   instructions: `You are a validation agent that determines if a user's query is related to finding streaming links for movies or TV series.
   
+  IMPORTANT: Be VERY LENIENT. When in doubt, accept the query.
+  
   A query is VALID if it:
+  - Is just a word, phrase, or title that COULD be a movie or TV series name (e.g., "inception", "breaking bad", "summer i turned pretty")
   - Asks for a movie or TV series by name
   - Requests streaming links, watch links, or where to watch content
   - Mentions specific movies, TV shows, series, episodes, or seasons
   - Asks about movie/TV series availability
+  - Users often just type the media name directly without "watch" or "streaming" keywords - ACCEPT these
   
-  A query is INVALID if it:
-  - Asks about general topics unrelated to movies/TV (e.g., math, science, cooking, news)
-  - Requests information not related to streaming (e.g., reviews, ratings, cast information)
-  - Is conversational without any media intent (e.g., "hello", "how are you")
-  - Asks for other types of content (books, music, podcasts, etc.)
+  A query is INVALID ONLY if it is CLEARLY:
+  - Asking about math, science, history, news, or other non-media topics with no possible media interpretation
+  - Pure conversational greeting with no media context (e.g., "hello", "how are you", "what's up")
+  - Explicitly asking for books, music albums, podcasts, or other non-video content
   
-  Return true for isValidMediaQuestion if the query is about finding movie/TV streaming links, false otherwise.
+  When uncertain whether something is a media title or not, ACCEPT it (return true).
+  
+  Return true for isValidMediaQuestion if the query could reasonably be about finding movie/TV streaming links, false only if clearly not.
   Provide a clear reason explaining why the query was accepted or rejected.`,
   model: model,
   outputType: z.object({
@@ -100,17 +105,29 @@ const searchMovieByNameTool = tool({
 const getStreamingLinkTool = tool({
   name: "get_streaming_link",
   description:
-    "Generates a streaming link for a specific movie using its TMDB ID. This tool constructs an embeddable video player URL that can be used to watch the movie. Call this tool after obtaining the movie ID from the search_movie_by_name tool.",
+    "Generates streaming links for a specific movie using its TMDB ID from multiple providers (VidKing, Vidsrc, Vidlink). This tool constructs embeddable video player URLs from 3 different streaming providers. Call this tool after obtaining the movie ID from the search_movie_by_name tool.",
   parameters: z.object({
     movieId: z
       .number()
       .describe(
-        "The Movie Database (TMDB) ID of the movie for which to generate a streaming link"
+        "The Movie Database (TMDB) ID of the movie for which to generate streaming links"
       ),
   }),
   execute: async ({ movieId }) => {
-    const streamingEmbedUrl = `https://www.vidking.net/embed/movie/${movieId}`;
-    return streamingEmbedUrl;
+    return [
+      {
+        provider: "VidKing",
+        link: `https://www.vidking.net/embed/movie/${movieId}`
+      },
+      {
+        provider: "Vidsrc",
+        link: `https://vidsrc.icu/embed/movie/${movieId}`
+      },
+      {
+        provider: "Vidlink",
+        link: `https://vidlink.pro/movie/${movieId}`
+      }
+    ];
   },
 });
 
@@ -185,7 +202,7 @@ const getTvSeriesDetailsTool = tool({
 const getTvSeriesStreamingLinkTool = tool({
   name: "get_tv_series_streaming_link",
   description:
-    "Generates a streaming link for a specific episode of a TV series using its TMDB ID, season number, and episode number. Call this tool after obtaining the series ID and understanding the series structure from the get_tv_series_details tool.",
+    "Generates streaming links for a specific episode of a TV series using its TMDB ID, season number, and episode number from multiple providers (VidKing, Vidsrc, Vidlink). Call this tool after obtaining the series ID and understanding the series structure from the get_tv_series_details tool.",
   parameters: z.object({
     seriesId: z
       .number()
@@ -198,38 +215,20 @@ const getTvSeriesStreamingLinkTool = tool({
       .describe("The episode number within the season (e.g., 8 for Episode 8)"),
   }),
   execute: async ({ seriesId, seasonNumber, episodeNumber }) => {
-    const streamingEmbedUrl = `https://www.vidking.net/embed/tv/${seriesId}/${seasonNumber}/${episodeNumber}`;
-    return streamingEmbedUrl;
-  },
-});
-
-const getAllEpisodeLinksForSeasonTool = tool({
-  name: "get_all_episode_links_for_season",
-  description:
-    "Generates streaming links for ALL episodes in a specific season of a TV series. Use this tool when the user requests a season but doesn't specify a particular episode number. This tool will return an array of streaming links for every episode in that season.",
-  parameters: z.object({
-    seriesId: z
-      .number()
-      .describe("The Movie Database (TMDB) ID of the TV series"),
-    seasonNumber: z
-      .number()
-      .describe("The season number (e.g., 1 for Season 1)"),
-    episodeCount: z
-      .number()
-      .describe(
-        "The total number of episodes in this season (obtained from get_tv_series_details tool)"
-      ),
-  }),
-  execute: async ({ seriesId, seasonNumber, episodeCount }) => {
-    const episodeLinks = [];
-    for (let episode = 1; episode <= episodeCount; episode++) {
-      const streamingEmbedUrl = `https://www.vidking.net/embed/tv/${seriesId}/${seasonNumber}/${episode}`;
-      episodeLinks.push({
-        episodeNumber: episode,
-        link: streamingEmbedUrl,
-      });
-    }
-    return episodeLinks;
+    return [
+      {
+        provider: "VidKing",
+        link: `https://www.vidking.net/embed/tv/${seriesId}/${seasonNumber}/${episodeNumber}`
+      },
+      {
+        provider: "Vidsrc",
+        link: `https://vidsrc.icu/embed/tv/${seriesId}/${seasonNumber}/${episodeNumber}`
+      },
+      {
+        provider: "Vidlink",
+        link: `https://vidlink.pro/tv/${seriesId}/${seasonNumber}/${episodeNumber}`
+      }
+    ];
   },
 });
 
@@ -242,16 +241,16 @@ const mediaStreamingAgent = new Agent({
     - Always respond in GitHub-flavored Markdown.
     - Always use bullet points only (a Markdown list). Even a single link must be in a bullet.
     - Do NOT use Markdown tables.
-    - When returning a link, format it as a Markdown link like: [Watch here](https://example.com)
-    - For multiple episode links, use one bullet per episode.
-    - Keep the response concise and only include information needed to use the link(s).
+    - When returning links, format each as: **Provider Name**: [Watch here](https://example.com)
+    - Present ALL 3 streaming links from different providers (VidKing, Vidsrc, Vidlink) with their provider names clearly labeled.
+    - Keep the response concise and only include information needed to use the links.
     
     For MOVIES:
         1) Extract the movie title from the user's query. 
         2) Use the 'search_movie_by_name' tool to find matching movies and their TMDB IDs. 
         3) If multiple results are found, select the most relevant movie based on the user's query. 
-        4) Use the 'get_streaming_link' tool with the movie's TMDB ID to generate the streaming URL. 
-        5) Present the streaming link to the user in a clear and friendly manner.
+        4) Use the 'get_streaming_link' tool with the movie's TMDB ID to generate streaming URLs from all 3 providers. 
+        5) Present ALL 3 streaming links with their provider names (VidKing, Vidsrc, Vidlink) in bullet points.
     
     For TV SERIES:
         1) Extract the TV series title from the user's query.
@@ -259,10 +258,11 @@ const mediaStreamingAgent = new Agent({
         3) If multiple results are found, select the most relevant series based on the user's query.
         4) Use the 'get_tv_series_details' tool to retrieve information about seasons and episodes.
         5) Determine what the user is asking for:
-           a) If the user specified BOTH season AND episode: use 'get_tv_series_streaming_link' to generate a single episode link.
-           b) If the user specified ONLY a season (no specific episode): use 'get_all_episode_links_for_season' to generate links for ALL episodes in that season.
-           c) If no season/episode was mentioned: ask the user which season and episode they want, or provide details about available seasons.
-        6) Present the streaming link(s) to the user in a clear, organized, and friendly manner.
+           a) If the user specified BOTH season AND episode: use 'get_tv_series_streaming_link' to generate streaming links from all 3 providers.
+           b) If the user specified ONLY a season (no specific episode): ask the user which specific episode they want to watch.
+           c) If no season was mentioned (just the series title): ask the user which season they want to watch, and mention available seasons.
+           d) If no episode was mentioned: ask the user which episode they want to watch. Always pin point to a specific episode by asking for clarification.
+        6) Present ALL 3 streaming links with their provider names (VidKing, Vidsrc, Vidlink) in bullet points.
     
     `,
   tools: [
@@ -271,7 +271,6 @@ const mediaStreamingAgent = new Agent({
     searchTvSeriesByNameTool,
     getTvSeriesDetailsTool,
     getTvSeriesStreamingLinkTool,
-    getAllEpisodeLinksForSeasonTool,
   ],
   model: model,
   inputGuardrails: [mediaInputGuardrail],
