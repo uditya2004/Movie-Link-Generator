@@ -283,7 +283,7 @@ export async function processQuery(userQuery, conversationHistory = []) {
     let fullQuery = userQuery;
     if (conversationHistory.length > 0) {
       const recentContext = conversationHistory
-        .slice(-3)     // Only last 2 messages
+        .slice(-3)     // Only last 3 messages
         .map(
           (msg) =>
             `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`
