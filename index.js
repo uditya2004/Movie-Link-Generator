@@ -126,6 +126,14 @@ const getStreamingLinkTool = tool({
       {
         provider: "Vidlink",
         link: `https://vidlink.pro/movie/${movieId}`
+      },
+      {
+        provider: "Multi-Embed",
+        link: `https://multiembed.mov/?video_id=${movieId}&tmdb=1`
+      },
+      {
+        provider: "Embed Master",
+        link: `https://embedmaster.link/y7jf5ax8pii6yr6g/movie/${movieId}`
       }
     ];
   },
@@ -227,6 +235,14 @@ const getTvSeriesStreamingLinkTool = tool({
       {
         provider: "Vidlink",
         link: `https://vidlink.pro/tv/${seriesId}/${seasonNumber}/${episodeNumber}`
+      },
+      {
+        provider: "Multi-Embed",
+        link: `https://multiembed.mov/?video_id=${seriesId}&tmdb=1&s=${seasonNumber}&e=${episodeNumber}`
+      },
+      {
+        provider: "Embed Master",
+        link: `https://embedmaster.link/y7jf5ax8pii6yr6g/tv/${seriesId}/${seasonNumber}/${episodeNumber}`
       }
     ];
   },
@@ -237,20 +253,23 @@ const mediaStreamingAgent = new Agent({
   instructions: `
     You are a helpful assistant that provides streaming links for both movies and TV series. 
 
+    CRITICAL: Your output must be plain text in Markdown format ONLY. Do NOT try to output JSON, structured data, or any other format.
+
     Response format requirements:
     - Always respond in GitHub-flavored Markdown.
     - Always use bullet points only (a Markdown list). Even a single link must be in a bullet.
     - Do NOT use Markdown tables.
     - When returning links, format each as: **Provider Name**: [Watch here](https://example.com)
-    - Present ALL 3 streaming links from different providers (VidKing, Vidsrc, Vidlink) with their provider names clearly labeled.
+    - Present ALL 5 streaming links from different providers (VidKing, Vidsrc, Vidlink, Multi-Embed, Embed Master) with their provider names clearly labeled.
     - Keep the response concise and only include information needed to use the links.
+    - Output ONLY the markdown text response, nothing else.
     
     For MOVIES:
         1) Extract the movie title from the user's query. 
         2) Use the 'search_movie_by_name' tool to find matching movies and their TMDB IDs. 
         3) If multiple results are found, select the most relevant movie based on the user's query. 
-        4) Use the 'get_streaming_link' tool with the movie's TMDB ID to generate streaming URLs from all 3 providers. 
-        5) Present ALL 3 streaming links with their provider names (VidKing, Vidsrc, Vidlink) in bullet points.
+        4) Use the 'get_streaming_link' tool with the movie's TMDB ID to generate streaming URLs from all providers. 
+        5) Present ALL 5 streaming links with their provider names in bullet points.
     
     For TV SERIES:
         1) Extract the TV series title from the user's query.
@@ -258,11 +277,11 @@ const mediaStreamingAgent = new Agent({
         3) If multiple results are found, select the most relevant series based on the user's query.
         4) Use the 'get_tv_series_details' tool to retrieve information about seasons and episodes.
         5) Determine what the user is asking for:
-           a) If the user specified BOTH season AND episode: use 'get_tv_series_streaming_link' to generate streaming links from all 3 providers.
+           a) If the user specified BOTH season AND episode: use 'get_tv_series_streaming_link' to generate streaming links from all providers.
            b) If the user specified ONLY a season (no specific episode): ask the user which specific episode they want to watch.
            c) If no season was mentioned (just the series title): ask the user which season they want to watch, and mention available seasons.
            d) If no episode was mentioned: ask the user which episode they want to watch. Always pin point to a specific episode by asking for clarification.
-        6) Present ALL 3 streaming links with their provider names (VidKing, Vidsrc, Vidlink) in bullet points.
+        6) Present ALL 5 streaming links with their provider names in bullet points.
     
     `,
   tools: [
